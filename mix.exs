@@ -32,6 +32,11 @@ defmodule OrionCollector.MixProject do
   end
 
   def package() do
-    [licenses: "Apache-2.0", source_url: "https://github.com/DianaOlympos/orion_collector"]
+    [
+      licenses: "Apache-2.0",
+      description: "server side data collector for Orion profiler",
+      link: %{"GitHub" => "https://github.com/DianaOlympos/orion_collector"},
+      source_url: "https://github.com/DianaOlympos/orion_collector"
+    ]
   end
 end
