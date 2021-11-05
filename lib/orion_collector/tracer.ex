@@ -161,6 +161,6 @@ defmodule OrionCollector.Tracer do
   end
 
   defp list_nodes() do
-    Node.list()
+    Node.list(:connected)
   end
 end
