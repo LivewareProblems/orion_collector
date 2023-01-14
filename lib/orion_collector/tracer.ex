@@ -2,12 +2,19 @@ defmodule OrionCollector.Tracer do
   use GenServer
   import Ex2ms
 
-  def start_all_node_tracers(mfa, self) do
+  def start_all_node_tracers(mfa, self, start_status \\ :running) do
     if self do
-      OrionCollector.Tracer.start_tracer(mfa, self())
+      OrionCollector.Tracer.start_tracer(mfa, self(), start_status)
     end
 
-    :erpc.multicall(list_nodes(), OrionCollector.Tracer, :start_tracer, [mfa, self()], 5_000)
+    :erpc.multicall(
+      list_nodes(),
+      OrionCollector.Tracer,
+      :start_tracer,
+      [mfa, self(), start_status],
+      5_000
+    )
+
     :ok
   end
 
@@ -37,8 +44,8 @@ defmodule OrionCollector.Tracer do
     )
   end
 
-  def start_tracer(mfa, pid) do
-    spec = {OrionCollector.Tracer, [mfa, pid]}
+  def start_tracer(mfa, pid, start_status) do
+    spec = {OrionCollector.Tracer, [mfa, pid, start_status]}
     DynamicSupervisor.start_child(OrionCollector.TracerSupervisor, spec)
   end
 
@@ -58,13 +65,17 @@ defmodule OrionCollector.Tracer do
     }
   end
 
+  # --PRIVATE--
   @impl true
-  def init([mfa, pid]) do
+  def init([mfa, pid, start_status]) do
     :pg.join({Orion, mfa}, self())
 
     mon_ref = Process.monitor(pid)
 
-    :erlang.trace_pattern(mfa, match_spec(), [:local])
+    if start_status == :running do
+      :erlang.trace_pattern(mfa, match_spec(), [:local])
+    end
+
     :erlang.trace(:all, true, [:call, :arity, :timestamp])
 
     Process.send_after(self(), :send_data, 500)
