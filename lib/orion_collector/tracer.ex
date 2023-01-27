@@ -24,22 +24,22 @@ defmodule OrionCollector.Tracer do
 
   def pause_trace(mfa, self) do
     if self do
-      :erlang.trace_pattern(mfa, false, [])
+      :erlang.trace_pattern(mfa, false, [:local])
     end
 
-    :erpc.multicall(list_nodes(), :erlang, :trace_pattern, [mfa, false, []], 5_000)
+    :erpc.multicall(list_nodes(), :erlang, :trace_pattern, [mfa, false, [:local]], 5_000)
   end
 
   def restart_trace(mfa, self) do
     if self do
-      :erlang.trace_pattern(mfa, [match_spec()], [:local])
+      :erlang.trace_pattern(mfa, match_spec(), [:local])
     end
 
     :erpc.multicall(
       list_nodes(),
       :erlang,
       :trace_pattern,
-      [mfa, [match_spec()], [:local]],
+      [mfa, match_spec(), [:local]],
       5_000
     )
   end
