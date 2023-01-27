@@ -8,8 +8,7 @@ defmodule OrionCollector.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      {DynamicSupervisor, strategy: :one_for_one, name: OrionCollector.TracerSupervisor},
-      %{id: :pg, start: {:pg, :start_link, []}, type: :supervisor}
+      {DynamicSupervisor, strategy: :one_for_one, name: OrionCollector.TracerSupervisor}
 
       # Starts a worker by calling: OrionCollector.Worker.start_link(arg)
       # {OrionCollector.Worker, arg}

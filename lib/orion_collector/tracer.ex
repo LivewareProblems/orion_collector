@@ -45,8 +45,8 @@ defmodule OrionCollector.Tracer do
   end
 
   def start_tracer(mfa, pid, start_status) do
-    spec = {OrionCollector.Tracer, [mfa, pid, start_status]}
-    DynamicSupervisor.start_child(OrionCollector.TracerSupervisor, spec)
+    spec_args = {OrionCollector.Tracer, [mfa, pid, start_status]}
+    DynamicSupervisor.start_child(OrionCollector.TracerSupervisor, spec_args)
   end
 
   def stop(pid) do
@@ -68,8 +68,6 @@ defmodule OrionCollector.Tracer do
   # --PRIVATE--
   @impl true
   def init([mfa, pid, start_status]) do
-    :pg.join({Orion, mfa}, self())
-
     mon_ref = Process.monitor(pid)
 
     if start_status == :running do
