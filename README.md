@@ -1,6 +1,8 @@
 # OrionCollector
 
-**TODO: Add description**
+This is the library handling the tracing for Orion.
+
+May be rewritten in erlang in the future.
 
 ## Installation
 
@@ -10,7 +12,7 @@ by adding `orion_collector` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:orion_collector, "~> 0.1.0"}
+    {:orion_collector, "~> 1.0.0"}
   ]
 end
 ```
@@ -19,3 +21,6 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/orion_collector](https://hexdocs.pm/orion_collector).
 
+## TODO
+
+* [ ] add tests

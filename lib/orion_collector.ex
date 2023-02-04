@@ -1,18 +1,10 @@
 defmodule OrionCollector do
   @moduledoc """
-  Documentation for `OrionCollector`.
+  OrionCollector is a child of Orion.
+
+  It only exist in order to separate collecting the traces in each nodes from
+  Orion.
+
+  All these API are considered private.
   """
-
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> OrionCollector.hello()
-      :world
-
-  """
-  def hello do
-    :world
-  end
 end
