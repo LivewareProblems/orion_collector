@@ -1,14 +1,19 @@
 defmodule OrionCollector.MixProject do
   use Mix.Project
 
+  @version "1.0.1"
+
   def project do
     [
       app: :orion_collector,
-      version: "1.0.0",
+      version: @version,
       elixir: "~> 1.12",
+      elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      package: package()
+      name: "orion_collector",
+      package: package(),
+      docs: docs()
     ]
   end
 
@@ -20,14 +25,16 @@ defmodule OrionCollector.MixProject do
     ]
   end
 
+  # Specifies which paths to compile per environment.
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
+
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       {:dog_sketch, "~> 0.1.2"},
       {:ex2ms, "~> 1.6"},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]
   end
 
@@ -35,8 +42,16 @@ defmodule OrionCollector.MixProject do
     [
       licenses: ["Apache-2.0"],
       description: "server side data collector for Orion profiler",
-      links: %{"GitHub" => "https://github.com/DianaOlympos/orion_collector"},
-      source_url: "https://github.com/DianaOlympos/orion_collector"
+      links: %{github: "https://github.com/LivewareProblems/orion_collector"},
+      source_url: "https://github.com/LivewareProblems/orion_collector"
+    ]
+  end
+
+  defp docs do
+    [
+      main: "orion_collector",
+      source_ref: "v#{@version}",
+      source_url: "https://github.com/LivewareProblems/orion_collector"
     ]
   end
 end
