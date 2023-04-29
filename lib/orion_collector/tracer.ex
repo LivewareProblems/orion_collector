@@ -26,18 +26,18 @@ defmodule OrionCollector.Tracer do
 
   def pause_trace(self) do
     if self do
-      OrionCollector.Tracer.change_status(:pause)
+      OrionCollector.Tracer.change_status(:paused)
     end
 
-    :erpc.multicall(list_nodes(), OrionCollector.Tracer, :change_status, [:pause], 5_000)
+    :erpc.multicall(list_nodes(), OrionCollector.Tracer, :change_status, [:paused], 5_000)
   end
 
   def restart_trace(self) do
     if self do
-      OrionCollector.Tracer.change_status(:start)
+      OrionCollector.Tracer.change_status(:running)
     end
 
-    :erpc.multicall(list_nodes(), OrionCollector.Tracer, :change_status, [:start], 5_000)
+    :erpc.multicall(list_nodes(), OrionCollector.Tracer, :change_status, [:runnning], 5_000)
   end
 
   def start_tracer(mfa, pid, start_status) do
@@ -71,14 +71,14 @@ defmodule OrionCollector.Tracer do
   def init(_start) do
     running_trace(false)
 
-    initial_state = %{running_status: :pause}
+    initial_state = %{running_status: :paused}
 
     {:ok, initial_state}
   end
 
   @impl true
   def handle_call(start_status, _from, state) do
-    running_trace(start_status == :start)
+    running_trace(start_status == :running)
     {:reply, :ok, Map.put(state, :running_status, start_status)}
   end
 
