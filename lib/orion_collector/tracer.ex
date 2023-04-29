@@ -24,10 +24,6 @@ defmodule OrionCollector.Tracer do
     :ok
   end
 
-  def pause_trace(nil, _self) do
-    :ok
-  end
-
   def pause_trace(self) do
     if self do
       OrionCollector.Tracer.change_status(:pause)
