@@ -49,7 +49,6 @@ defmodule OrionCollector.MixProject do
 
   defp docs do
     [
-      main: "orion_collector",
       source_ref: "v#{@version}",
       source_url: "https://github.com/LivewareProblems/orion_collector"
     ]
