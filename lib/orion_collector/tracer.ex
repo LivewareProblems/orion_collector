@@ -84,10 +84,11 @@ defmodule OrionCollector.Tracer do
 
   @impl true
   def handle_info(
-        {:trace_ts, _trace_pid, :call, mfa, _start_time} = trace_msg,
+        {:trace_ts, _trace_pid, :call, {m, f, args}, _start_time} = trace_msg,
         state
       ) do
-    GenServer.cast(Aggregator.mfa_to_name(mfa), trace_msg)
+    mfarity = {m, f, length(args)}
+    GenServer.cast(Aggregator.mfa_to_name(mfarity), trace_msg)
     {:noreply, state}
   end
 
