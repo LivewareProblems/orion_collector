@@ -11,6 +11,14 @@ defmodule OrionCollector.Aggregator do
     {:via, Registry, {OrionCollector.Aggregator.Registry, mfa}}
   end
 
+  def intercept_slowest_calls(mfa, timing_ms) do
+    GenServer.cast(mfa_to_name(mfa), {:trace_slowest, timing_ms})
+  end
+
+  def stop_slowest_calls(mfa) do
+    GenServer.cast(mfa_to_name(mfa), :stop_slowest)
+  end
+
   def stop(pid) do
     GenServer.stop(pid, :normal, 5_000)
   end
@@ -135,7 +143,7 @@ defmodule OrionCollector.Aggregator do
   end
 
   @impl true
-  def handle_cast({:stop_slowest}, %State{} = state) do
+  def handle_cast(:stop_slowest, %State{} = state) do
     {:noreply, Map.put(state, :slowest_timing, nil)}
   end
 

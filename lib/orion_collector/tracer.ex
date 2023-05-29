@@ -8,37 +8,6 @@ defmodule OrionCollector.Tracer do
 
   There is one Tracer per node, but one Aggregator per MFA being traced.
   """
-  def start_all_node_tracers(mfa, self, start_status \\ :running) do
-    if self do
-      OrionCollector.Tracer.start_tracer(mfa, self(), start_status)
-    end
-
-    :erpc.multicall(
-      list_nodes(),
-      OrionCollector.Tracer,
-      :start_tracer,
-      [mfa, self(), start_status],
-      5_000
-    )
-
-    :ok
-  end
-
-  def pause_trace(self) do
-    if self do
-      OrionCollector.Tracer.change_status(:paused)
-    end
-
-    :erpc.multicall(list_nodes(), OrionCollector.Tracer, :change_status, [:paused], 5_000)
-  end
-
-  def restart_trace(self) do
-    if self do
-      OrionCollector.Tracer.change_status(:running)
-    end
-
-    :erpc.multicall(list_nodes(), OrionCollector.Tracer, :change_status, [:runnning], 5_000)
-  end
 
   def start_tracer(mfa, pid, start_status) do
     Aggregator.start_agg(mfa, pid)
@@ -106,9 +75,5 @@ defmodule OrionCollector.Tracer do
 
   defp running_trace(bool) do
     :erlang.trace(:all, bool, [:call, :arity, :timestamp])
-  end
-
-  defp list_nodes() do
-    Node.list(:connected)
   end
 end
