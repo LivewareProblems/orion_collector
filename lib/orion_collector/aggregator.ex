@@ -30,6 +30,18 @@ defmodule OrionCollector.Aggregator do
   end
 
   # --PRIVATE--
+
+  defmodule State do
+    defstruct mfa: {},
+              liveview_pid: nil,
+              call_depth: %{},
+              time_stored: %{},
+              ddsketch: DogSketch.SimpleDog.new(),
+              ref_mon: nil,
+              slowest_timing: nil,
+              args: []
+  end
+
   @impl true
   def init([mfa, pid]) do
     mon_ref = Process.monitor(pid)
@@ -38,7 +50,7 @@ defmodule OrionCollector.Aggregator do
 
     Process.send_after(self(), :send_data, 500)
 
-    initial_state = %{
+    initial_state = %State{
       mfa: mfa,
       liveview_pid: pid,
       call_depth: %{},
@@ -52,17 +64,17 @@ defmodule OrionCollector.Aggregator do
 
   @impl true
   def handle_cast(
-        {:trace_ts, trace_pid, :call, _mfa, start_time},
-        state = %{call_depth: cd_map, time_stored: time_stored_map}
+        {:trace_ts, trace_pid, :call, {_m, _f, args}, start_time},
+        state = %State{call_depth: cd_map}
       ) do
     cd = Map.get(cd_map, trace_pid, 0)
     new_cd_map = Map.put(cd_map, trace_pid, cd + 1)
 
     new_ts_map =
       if cd == 0 do
-        Map.put(time_stored_map, {trace_pid, cd + 1}, start_time)
+        Map.put(state.time_stored, {trace_pid, cd + 1}, {start_time, args})
       else
-        time_stored_map
+        state.time_stored
       end
 
     new_state =
@@ -77,8 +89,8 @@ defmodule OrionCollector.Aggregator do
 
   @impl true
   def handle_cast(
-        {:trace_ts, trace_pid, return_tag, _mfa, _TraceTerm, end_time},
-        state = %{call_depth: cd_map, time_stored: time_stored_map, ddsketch: ddsketch}
+        {:trace_ts, trace_pid, return_tag, _mfa, return_or_exception, end_time},
+        state = %State{call_depth: cd_map}
       )
       when return_tag in @accepted_return_tags do
     case Map.get(cd_map, trace_pid, 0) do
@@ -87,10 +99,20 @@ defmodule OrionCollector.Aggregator do
 
       1 ->
         new_cd_map = Map.delete(cd_map, trace_pid)
-        {start_time, new_ts_map} = Map.pop(time_stored_map, {trace_pid, 1})
+        {{start_time, start_args}, new_ts_map} = Map.pop(state.time_stored, {trace_pid, 1})
 
         call_time_micro = :timer.now_diff(end_time, start_time)
-        new_sketch = DogSketch.SimpleDog.insert(ddsketch, call_time_micro / 1_000)
+
+        if state.slowest_timing && state.slowest_timing < call_time_micro do
+          send(state.liveview_pid, %OrionCollector.TimingMessage{
+            args: start_args,
+            result: {return_tag, return_or_exception},
+            time: call_time_micro,
+            slowest_than: state.slowest_timing
+          })
+        end
+
+        new_sketch = DogSketch.SimpleDog.insert(state.ddsketch, call_time_micro / 1_000)
 
         new_state =
           state
@@ -108,11 +130,21 @@ defmodule OrionCollector.Aggregator do
   end
 
   @impl true
-  def handle_info(:send_data, %{ddsketch: ddsketch, liveview_pid: liveview_pid} = state) do
+  def handle_cast({:trace_slowest, ms_timing}, %State{} = state) do
+    {:noreply, Map.put(state, :slowest_timing, ms_timing)}
+  end
+
+  @impl true
+  def handle_cast({:stop_slowest}, %State{} = state) do
+    {:noreply, Map.put(state, :slowest_timing, nil)}
+  end
+
+  @impl true
+  def handle_info(:send_data, %State{ddsketch: ddsketch} = state) do
     new_sketch = DogSketch.SimpleDog.new()
 
     if ddsketch != new_sketch do
-      send(liveview_pid, {:ddsketch, ddsketch})
+      send(state.liveview_pid, {:ddsketch, ddsketch})
     end
 
     Process.send_after(self(), :send_data, 500)
@@ -121,8 +153,8 @@ defmodule OrionCollector.Aggregator do
   end
 
   @impl true
-  def handle_info({:DOWN, ref, :process, _object, _reason}, %{ref_mon: ref, mfa: mfa} = state) do
-    :erlang.trace_pattern(mfa, false, [])
+  def handle_info({:DOWN, ref, :process, _object, _reason}, %State{ref_mon: ref} = state) do
+    :erlang.trace_pattern(state.mfa, false, [])
     {:stop, :normal, state}
   end
 
