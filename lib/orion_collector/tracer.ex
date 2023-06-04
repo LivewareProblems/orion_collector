@@ -74,6 +74,6 @@ defmodule OrionCollector.Tracer do
   end
 
   defp running_trace(bool) do
-    :erlang.trace(:all, bool, [:call, :arity, :timestamp])
+    :erlang.trace(:all, bool, [:call, :timestamp])
   end
 end
